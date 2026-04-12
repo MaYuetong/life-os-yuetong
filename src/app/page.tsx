@@ -10,6 +10,7 @@ import {
   Zap,
   LayoutGrid,
   Flame,
+  CalendarClock,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { SectionCard } from '@/components/SectionCard'
@@ -83,6 +84,7 @@ export default function Dashboard() {
           <div className="ml-auto flex items-center gap-2">
             {/* Quick nav */}
             {[
+              { href: '/deadlines', icon: CalendarClock, label: '截止', color: 'text-orange-400' },
               { href: '/job', icon: Briefcase, label: '求职', color: 'text-violet-400' },
               { href: '/brand', icon: Globe, label: '品牌', color: 'text-purple-400' },
               { href: '/memories', icon: Camera, label: '回忆', color: 'text-sky-400' },
@@ -227,8 +229,9 @@ export default function Dashboard() {
           </section>
 
           {/* ── Bottom quick links ── */}
-          <section className="grid grid-cols-3 gap-3 animate-fade-up delay-400 pb-6">
+          <section className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-fade-up delay-400 pb-6">
             {[
+              { href: '/deadlines', icon: CalendarClock, label: '截止日历', sub: '全部截止日期', color: 'from-orange-500 to-amber-500' },
               { href: '/job', icon: Briefcase, label: '求职追踪台', sub: '投递记录 · 面试管理', color: 'from-violet-500 to-indigo-500' },
               { href: '/brand', icon: Globe, label: '个人品牌 CMS', sub: '网站编辑 · 实时预览', color: 'from-purple-500 to-pink-500' },
               { href: '/memories', icon: Camera, label: '摄影回忆', sub: '照片 · 旅行 · 时刻', color: 'from-sky-500 to-blue-500' },
