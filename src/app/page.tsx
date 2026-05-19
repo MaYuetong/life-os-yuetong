@@ -1,14 +1,16 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Briefcase, Globe, Camera, CalendarClock, ArrowRight } from 'lucide-react'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { SectionCard } from '@/components/SectionCard'
+import { SectionCard, type KanbanProjectSummary } from '@/components/SectionCard'
 import { TopThree } from '@/components/TopThree'
 import TourBriefingWidget from '@/components/TourBriefingWidget'
 import { sections } from '@/lib/sections'
 import { calculatePriority, sortByPriority } from '@/lib/priority'
+
+type KanbanSummary = Record<string, KanbanProjectSummary>
 
 const TODAY = new Date().toLocaleDateString('zh-CN', {
   year: 'numeric',
@@ -21,6 +23,25 @@ type Filter = 'all' | 'active' | 'urgent'
 
 export default function Dashboard() {
   const [filter, setFilter] = useState<Filter>('all')
+  const [kanban, setKanban] = useState<KanbanSummary | null>(null)
+  const [lastSync, setLastSync] = useState<Date | null>(null)
+
+  useEffect(() => {
+    const refresh = () =>
+      fetch('/api/kanban')
+        .then(r => r.json())
+        .then(data => {
+          if (data.available && data.summary) {
+            setKanban(data.summary)
+            setLastSync(new Date())
+          }
+        })
+        .catch(() => null)
+
+    refresh()
+    const timer = setInterval(refresh, 60_000)
+    return () => clearInterval(timer)
+  }, [])
 
   const sortedSections = useMemo(() => sortByPriority(sections), [])
 
@@ -32,11 +53,18 @@ export default function Dashboard() {
 
   const topThree = sortedSections.slice(0, 3)
 
-  const stats = useMemo(() => ({
-    avgProgress: Math.round(sections.reduce((s, x) => s + x.progress, 0) / sections.length),
-    activeSections: sections.filter(s => s.status === 'active').length,
-    urgentCount: sections.filter(s => calculatePriority(s) >= 7.5).length,
-  }), [])
+  const stats = useMemo(() => {
+    const avgProgress = kanban
+      ? Math.round(
+          sections.reduce((sum, s) => sum + (kanban[s.id]?.progress ?? s.progress), 0) / sections.length
+        )
+      : Math.round(sections.reduce((s, x) => s + x.progress, 0) / sections.length)
+    return {
+      avgProgress,
+      activeSections: sections.filter(s => s.status === 'active').length,
+      urgentCount: sections.filter(s => calculatePriority(s) >= 7.5).length,
+    }
+  }, [kanban])
 
   return (
     <div className="min-h-screen bg-[rgb(var(--bg))]">
@@ -70,7 +98,24 @@ export default function Dashboard() {
             ))}
           </nav>
 
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-4">
+            {/* Hermes connection status */}
+            {kanban !== null ? (
+              <span className="hidden sm:flex items-center gap-1.5 text-[9px] font-mono text-emerald-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Hermes
+                {lastSync && (
+                  <span className="text-emerald-600/60">
+                    {lastSync.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span className="hidden sm:flex items-center gap-1.5 text-[9px] font-mono text-[rgb(var(--text-3))]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--border))]" />
+                Hermes offline
+              </span>
+            )}
             <ThemeToggle />
           </div>
         </div>
@@ -123,7 +168,7 @@ export default function Dashboard() {
           <section className="animate-fade-up delay-200">
             <div className="flex items-center justify-between mb-6">
               <p className="section-label">
-                8 Projects &nbsp;·&nbsp; Score = 0.4×截止 + 0.3×影响 + 0.2×签证 + 0.1×机会成本
+                {sections.length} Projects &nbsp;·&nbsp; Score = 0.4×截止 + 0.3×影响 + 0.2×签证 + 0.1×机会成本
               </p>
 
               {/* Filter tabs */}
@@ -159,6 +204,7 @@ export default function Dashboard() {
                     section={section}
                     rank={sortedSections.findIndex(s => s.id === section.id) + 1}
                     score={calculatePriority(section)}
+                    kanban={kanban?.[section.id]}
                   />
                 </div>
               ))}

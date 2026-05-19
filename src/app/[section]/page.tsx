@@ -6,7 +6,6 @@ import {
   FileText,
   CalendarDays,
   RefreshCw,
-  CheckCircle2,
   Clock,
   AlertCircle,
   Folder,
@@ -17,6 +16,7 @@ import { sections, getSectionBySlug } from '@/lib/sections'
 import { calculatePriority, sortByPriority } from '@/lib/priority'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { OpenLocalButton } from '@/components/OpenLocalButton'
+import { LiveKanbanPanel } from '@/components/LiveKanbanPanel'
 
 export function generateStaticParams() {
   return sections.map(s => ({ section: s.slug }))
@@ -192,6 +192,7 @@ export default async function SectionPage({
                 <div className="h-px bg-[rgb(var(--border))] mt-2 md:w-[140px]">
                   <div className="h-px bg-[rgb(var(--text))]" style={{ width: `${section.progress}%` }} />
                 </div>
+                <p className="text-[9px] text-[rgb(var(--text-3))] mt-2 font-mono">static fallback</p>
               </div>
             </div>
           </div>
@@ -200,39 +201,15 @@ export default async function SectionPage({
         {/* ── Tasks + Priority breakdown ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-          {/* Pending tasks */}
-          <div className="border border-[rgb(var(--border))] p-6">
-            <p className="section-label mb-5">待办任务</p>
-            <ol className="space-y-3">
-              {section.tasks.map((task, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className="text-[10px] font-mono font-bold tabular-nums text-[rgb(var(--text-3))] w-4 shrink-0 mt-0.5">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span className="text-sm text-[rgb(var(--text-2))] leading-snug">{task}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
+          {/* Live Kanban tasks (falls back to static if Hermes offline) */}
+          <LiveKanbanPanel
+            sectionId={section.id}
+            staticProgress={section.progress}
+            staticTasks={section.tasks}
+            staticDone={section.completedTasks ?? []}
+          />
 
           <div className="space-y-6">
-            {/* Completed tasks */}
-            {section.completedTasks && section.completedTasks.length > 0 && (
-              <div className="border border-[rgb(var(--border))] p-6">
-                <p className="section-label mb-4">已完成</p>
-                <ul className="space-y-2">
-                  {section.completedTasks.map((task, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[rgb(var(--text-3))]" />
-                      <span className="text-xs text-[rgb(var(--text-3))] line-through leading-snug">
-                        {task}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
             {/* Priority breakdown */}
             <div className="border border-[rgb(var(--border))] p-6">
               <p className="section-label mb-5">优先级分解</p>

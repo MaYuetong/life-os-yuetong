@@ -81,6 +81,7 @@ export const sections: Section[] = [
     status: 'active',
     progress: 40,
     liveUrl: 'https://silora-orient.vercel.app',
+    vaultPath: 'silora-orient/docs',
     readmePath: 'silora-orient/README.md',
     startDate: '2026-04-04',
     lastUpdated: '2026-05-06',
@@ -249,6 +250,7 @@ export const sections: Section[] = [
     status: 'active',
     progress: 80,
     liveUrl: 'https://experience.arcgis.com/experience/b01db399b3f74eefaeb5e3b8e85aea66',
+    vaultPath: 'UN-Cartography-Research',
     startDate: '2026-03-15',
     lastUpdated: '2026-04-20',
     links: [],
@@ -329,7 +331,45 @@ export const sections: Section[] = [
     ],
   },
 
-  // ── 07 其他管理 ────────────────────────────────────────────────────
+  // ── 07 O-1 Visa ────────────────────────────────────────────────────
+  {
+    id: 'o1-visa',
+    slug: 'o1-visa',
+    icon: '🗽',
+    title: 'O-1 Visa Application',
+    titleCN: 'O-1 杰出人才签证',
+    description: 'Extraordinary Ability Visa · 美国工作身份',
+    folderName: 'O-1 Master Folder',
+    gradient: 'from-blue-600 to-indigo-500',
+    cardGradient: 'from-blue-600/[0.08] to-indigo-500/[0.08]',
+    glowColor: 'group-hover:shadow-blue-600/20',
+    deadline: 0.7,
+    deadlineDate: '2026-09-01',
+    deadlines: [
+      { date: '2026-06-30', label: '移民律师首次咨询 · 确认申请路径' },
+      { date: '2026-08-01', label: '证据材料清单定稿' },
+      { date: '2026-09-01', label: '推荐信收集完成（目标 5 封）' },
+    ],
+    impact: 0.95,
+    visa: 1.0,
+    cost: 0.9,
+    tasks: [
+      '联系移民律师 · 确认 O-1A/B 申请路径',
+      '整理杰出能力证明材料清单（论文/展览/项目）',
+      '收集推荐信（目标：5 封，含 UN/IAEA 推荐）',
+      '准备媒体报道 / 公开展览证据',
+    ],
+    completedTasks: [],
+    status: 'active',
+    progress: 5,
+    vaultPath: 'O-1 Master Folder',
+    readmePath: 'O-1 Master Folder/status.md',
+    startDate: '2026-05-14',
+    lastUpdated: '2026-05-14',
+    links: [],
+  },
+
+  // ── 08 其他管理 ────────────────────────────────────────────────────
   {
     id: 'admin',
     slug: 'admin',

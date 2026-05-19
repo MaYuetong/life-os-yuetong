@@ -18,6 +18,15 @@ const STATUS_LABEL: Record<Section['status'], string> = {
   blocked:   '受阻',
 }
 
+export interface KanbanProjectSummary {
+  total: number
+  done: number
+  running: number
+  blocked: number
+  todo: number
+  progress: number
+}
+
 function openLocal(rel: string) {
   fetch(`/api/open?path=${encodeURIComponent(rel)}`).catch(() => null)
 }
@@ -31,9 +40,12 @@ interface SectionCardProps {
   section: Section
   rank: number
   score: number
+  kanban?: KanbanProjectSummary
 }
 
-export function SectionCard({ section, rank, score }: SectionCardProps) {
+export function SectionCard({ section, rank, score, kanban }: SectionCardProps) {
+  const progress = kanban ? kanban.progress : section.progress
+
   return (
     <div className="group relative flex flex-col gap-4 p-5 border border-[rgb(var(--border))] hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors duration-150">
       {/* Full-card link */}
@@ -42,7 +54,6 @@ export function SectionCard({ section, rank, score }: SectionCardProps) {
       {/* Top: index badge + name + score */}
       <div className="relative z-10 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          {/* Index number replaces emoji */}
           <div className="w-9 h-9 border border-[rgb(var(--border))] flex items-center justify-center shrink-0">
             <span className="text-[11px] font-mono font-bold text-[rgb(var(--text-2))] tabular-nums">
               {String(rank).padStart(2, '0')}
@@ -68,14 +79,46 @@ export function SectionCard({ section, rank, score }: SectionCardProps) {
       {/* Progress */}
       <div className="relative z-10">
         <div className="flex justify-between items-center mb-2">
-          <span className="section-label">Progress</span>
+          <div className="flex items-center gap-2">
+            <span className="section-label">Progress</span>
+            {kanban && (
+              <span className="flex items-center gap-1 text-[9px] font-mono text-emerald-500 dark:text-emerald-400">
+                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                LIVE
+              </span>
+            )}
+          </div>
           <span className="text-[10px] font-semibold tabular-nums text-[rgb(var(--text-2))]">
-            {section.progress}%
+            {progress}%
           </span>
         </div>
         <div className="h-px bg-[rgb(var(--border))]">
-          <div className="h-px bg-[rgb(var(--text))]" style={{ width: `${section.progress}%` }} />
+          <div
+            className="h-px bg-[rgb(var(--text))] transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
         </div>
+        {/* Kanban task breakdown */}
+        {kanban && (
+          <div className="flex items-center gap-3 mt-2">
+            <span className="text-[9px] text-emerald-600 dark:text-emerald-400 tabular-nums font-mono">
+              ✓ {kanban.done}
+            </span>
+            {kanban.running > 0 && (
+              <span className="text-[9px] text-blue-500 tabular-nums font-mono">
+                ▶ {kanban.running}
+              </span>
+            )}
+            {kanban.blocked > 0 && (
+              <span className="text-[9px] text-red-500 tabular-nums font-mono">
+                ✕ {kanban.blocked}
+              </span>
+            )}
+            <span className="text-[9px] text-[rgb(var(--text-3))] tabular-nums font-mono">
+              · {kanban.todo} 待办
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Tasks */}
