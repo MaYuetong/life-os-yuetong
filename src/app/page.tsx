@@ -2,13 +2,14 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Briefcase, Globe, Camera, CalendarClock, ArrowRight } from 'lucide-react'
+import { Briefcase, Globe, Camera, CalendarClock, ArrowRight, Plus, CheckCircle2, Newspaper, ListTodo, RefreshCw } from 'lucide-react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { SectionCard, type KanbanProjectSummary } from '@/components/SectionCard'
 import { TopThree } from '@/components/TopThree'
 import TourBriefingWidget from '@/components/TourBriefingWidget'
 import { sections } from '@/lib/sections'
 import { calculatePriority, sortByPriority } from '@/lib/priority'
+import type { FeedItem, FeedItemType } from '@/app/api/feed/route'
 
 type KanbanSummary = Record<string, KanbanProjectSummary>
 
@@ -21,10 +22,32 @@ const TODAY = new Date().toLocaleDateString('zh-CN', {
 
 type Filter = 'all' | 'active' | 'urgent'
 
+const TYPE_ICON: Record<FeedItemType, typeof CheckCircle2> = {
+  win:    CheckCircle2,
+  news:   Newspaper,
+  task:   ListTodo,
+  update: RefreshCw,
+}
+const TYPE_COLOR: Record<FeedItemType, string> = {
+  win:    'text-emerald-400',
+  news:   'text-blue-400',
+  task:   'text-amber-400',
+  update: 'text-purple-400',
+}
+
+function timeAgo(ts: number) {
+  const diff = Date.now() - ts
+  if (diff < 60000)    return '刚刚'
+  if (diff < 3600000)  return `${Math.floor(diff / 60000)}分钟前`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
+  return `${Math.floor(diff / 86400000)}天前`
+}
+
 export default function Dashboard() {
   const [filter, setFilter] = useState<Filter>('all')
   const [kanban, setKanban] = useState<KanbanSummary | null>(null)
   const [lastSync, setLastSync] = useState<Date | null>(null)
+  const [feed, setFeed] = useState<FeedItem[]>([])
 
   useEffect(() => {
     const refresh = () =>
@@ -41,6 +64,13 @@ export default function Dashboard() {
     refresh()
     const timer = setInterval(refresh, 60_000)
     return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/feed')
+      .then(r => r.json())
+      .then(d => setFeed(d.items ?? []))
+      .catch(() => null)
   }, [])
 
   const sortedSections = useMemo(() => sortByPriority(sections), [])
@@ -71,7 +101,7 @@ export default function Dashboard() {
 
       {/* ── Header ── */}
       <header className="fixed top-0 left-0 right-0 z-50 h-14 border-b border-[rgb(var(--border))] bg-[rgb(var(--bg))]">
-        <div className="max-w-5xl mx-auto px-6 h-full flex items-center gap-5">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 h-full flex items-center gap-4 md:gap-5">
           {/* Logo */}
           <div className="flex items-baseline gap-1.5 shrink-0">
             <span className="font-bold text-sm text-[rgb(var(--text))] tracking-tight">Life OS</span>
@@ -81,7 +111,7 @@ export default function Dashboard() {
           <div className="h-4 w-px bg-[rgb(var(--border))]" />
 
           {/* Nav */}
-          <nav className="hidden sm:flex items-center gap-6 flex-1">
+          <nav className="hidden sm:flex items-center gap-5 flex-1">
             {[
               { href: '/deadlines', label: '截止日历' },
               { href: '/job',       label: '求职' },
@@ -98,8 +128,8 @@ export default function Dashboard() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-4">
-            {/* Hermes connection status */}
+          <div className="ml-auto flex items-center gap-3">
+            {/* Hermes status */}
             {kanban !== null ? (
               <span className="hidden sm:flex items-center gap-1.5 text-[9px] font-mono text-emerald-500">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -116,6 +146,16 @@ export default function Dashboard() {
                 Hermes offline
               </span>
             )}
+
+            {/* Quick add button */}
+            <Link
+              href="/add"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[rgb(var(--text))] text-[rgb(var(--bg))] text-xs font-semibold transition-opacity hover:opacity-80"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">添加动态</span>
+            </Link>
+
             <ThemeToggle />
           </div>
         </div>
@@ -123,12 +163,12 @@ export default function Dashboard() {
 
       {/* ── Main ── */}
       <main className="pt-14">
-        <div className="max-w-5xl mx-auto px-6 py-14 space-y-16">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 py-10 md:py-14 space-y-12 md:space-y-16">
 
           {/* ── Hero ── */}
           <section className="animate-fade-up">
             <p className="section-label mb-4">Personal Operating System · {TODAY}</p>
-            <h1 className="text-4xl md:text-5xl font-bold text-[rgb(var(--text))] tracking-[-0.03em] leading-tight">
+            <h1 className="text-3xl md:text-5xl font-bold text-[rgb(var(--text))] tracking-[-0.03em] leading-tight">
               你好，跃瞳
             </h1>
             <p className="mt-3 text-sm text-[rgb(var(--text-2))]">
@@ -139,15 +179,15 @@ export default function Dashboard() {
             </p>
 
             {/* Stats grid */}
-            <div className="grid grid-cols-3 border border-[rgb(var(--border))] divide-x divide-[rgb(var(--border))] mt-8">
+            <div className="grid grid-cols-3 border border-[rgb(var(--border))] divide-x divide-[rgb(var(--border))] mt-6 md:mt-8">
               {[
                 { label: '平均进度', value: `${stats.avgProgress}%`, alert: false },
                 { label: '活跃板块', value: `${stats.activeSections}`, alert: false },
                 { label: '高优任务', value: `${stats.urgentCount}`, alert: stats.urgentCount > 0 },
               ].map(({ label, value, alert }) => (
-                <div key={label} className="p-6 md:p-8">
-                  <p className="section-label mb-3">{label}</p>
-                  <p className={`text-4xl font-bold tabular-nums tracking-tight ${
+                <div key={label} className="p-4 md:p-8">
+                  <p className="section-label mb-2 md:mb-3">{label}</p>
+                  <p className={`text-3xl md:text-4xl font-bold tabular-nums tracking-tight ${
                     alert ? 'text-red-600 dark:text-red-400' : 'text-[rgb(var(--text))]'
                   }`}>
                     {value}
@@ -156,6 +196,41 @@ export default function Dashboard() {
               ))}
             </div>
           </section>
+
+          {/* ── Recent Feed ── */}
+          {feed.length > 0 && (
+            <section className="animate-fade-up delay-75">
+              <div className="flex items-center justify-between mb-4">
+                <p className="section-label">最近动态</p>
+                <Link href="/add" className="text-[10px] text-[rgb(var(--text-3))] hover:text-[rgb(var(--text))] transition-colors flex items-center gap-1">
+                  <Plus className="w-3 h-3" />
+                  添加
+                </Link>
+              </div>
+              <div className="border border-[rgb(var(--border))] divide-y divide-[rgb(var(--border))]">
+                {feed.slice(0, 6).map(item => {
+                  const sec = sections.find(s => s.id === item.sectionId)
+                  const Icon = TYPE_ICON[item.type]
+                  const color = TYPE_COLOR[item.type]
+                  return (
+                    <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+                      <span className="text-base leading-none shrink-0">
+                        {item.emoji || <Icon className={`w-4 h-4 ${color}`} />}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-[rgb(var(--text))] truncate">{item.text}</p>
+                      </div>
+                      <div className="shrink-0 text-right hidden sm:block">
+                        <p className="text-[10px] text-[rgb(var(--text-3))]">{sec?.icon} {sec?.titleCN}</p>
+                        <p className="text-[10px] text-[rgb(var(--text-3))]">{timeAgo(item.ts)}</p>
+                      </div>
+                      <p className="text-[10px] text-[rgb(var(--text-3))] shrink-0 sm:hidden">{timeAgo(item.ts)}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          )}
 
           {/* ── Top 3 ── */}
           <section className="animate-fade-up delay-100">
@@ -166,8 +241,8 @@ export default function Dashboard() {
 
           {/* ── Projects grid ── */}
           <section className="animate-fade-up delay-200">
-            <div className="flex items-center justify-between mb-6">
-              <p className="section-label">
+            <div className="flex items-center justify-between mb-5 md:mb-6">
+              <p className="section-label text-[10px] md:text-[11px]">
                 {sections.length} Projects &nbsp;·&nbsp; Score = 0.4×截止 + 0.3×影响 + 0.2×签证 + 0.1×机会成本
               </p>
 
@@ -181,7 +256,7 @@ export default function Dashboard() {
                   <button
                     key={key}
                     onClick={() => setFilter(key)}
-                    className={`px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.1em] transition-colors ${
+                    className={`px-2.5 md:px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.1em] transition-colors ${
                       filter === key
                         ? 'bg-[rgb(var(--text))] text-[rgb(var(--bg))]'
                         : 'text-[rgb(var(--text-2))] hover:text-[rgb(var(--text))]'
@@ -193,7 +268,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
               {filteredSections.map((section, i) => (
                 <div
                   key={section.id}
@@ -228,8 +303,8 @@ export default function Dashboard() {
 
           {/* ── Quick access ── */}
           <section className="animate-fade-up delay-300 pb-12">
-            <p className="section-label mb-6">Quick Access</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <p className="section-label mb-5 md:mb-6">Quick Access</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {[
                 { href: '/deadlines', icon: CalendarClock, label: '截止日历',   sub: '全部截止日期' },
                 { href: '/job',       icon: Briefcase,     label: '求职追踪',   sub: '投递 · 面试管理' },
@@ -239,7 +314,7 @@ export default function Dashboard() {
                 <Link
                   key={href}
                   href={href}
-                  className="group flex flex-col gap-4 p-5 border border-[rgb(var(--border))] hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+                  className="group flex flex-col gap-3 md:gap-4 p-4 md:p-5 border border-[rgb(var(--border))] hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                 >
                   <Icon className="w-5 h-5 text-[rgb(var(--text-2))]" />
                   <div>
@@ -254,6 +329,14 @@ export default function Dashboard() {
 
         </div>
       </main>
+
+      {/* ── Mobile FAB ── */}
+      <Link
+        href="/add"
+        className="fixed bottom-6 right-6 sm:hidden z-40 w-14 h-14 rounded-full bg-[rgb(var(--text))] text-[rgb(var(--bg))] flex items-center justify-center shadow-xl active:scale-95 transition-transform"
+      >
+        <Plus className="w-6 h-6" />
+      </Link>
     </div>
   )
 }
