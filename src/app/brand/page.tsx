@@ -36,6 +36,14 @@ const QUICK_FILES = [
     externalUrl: 'https://silora-orient.vercel.app',
   },
   {
+    label: '✦ Be My Model — 私密邀请页',
+    file: 'silora-orient/model.html',
+    icon: Palette,
+    color: 'text-rose-400',
+    desc: '互惠模特申请 · 不在公开导航中 · 仅限邀请',
+    externalUrl: 'https://silora-orient.vercel.app/model.html',
+  },
+  {
     label: '英文简历 resume.html',
     file: 'personal-resume-website/resume/resume.html',
     icon: FileText,
