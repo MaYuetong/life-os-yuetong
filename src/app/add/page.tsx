@@ -45,7 +45,7 @@ export default function AddPage() {
   useEffect(() => {
     // Check session PIN
     const saved = sessionStorage.getItem('life-pin')
-    if (saved === '9527') setAuthed(true)
+    if (saved === '0107') setAuthed(true)
   }, [])
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function AddPage() {
   }, [sent])
 
   function handlePinSubmit() {
-    if (pin === '9527') {
+    if (pin === '0107') {
       sessionStorage.setItem('life-pin', pin)
       setAuthed(true)
       setPinError(false)
@@ -73,7 +73,7 @@ export default function AddPage() {
       const res = await fetch('/api/feed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sectionId, type, text, emoji, pin: '9527' }),
+        body: JSON.stringify({ sectionId, type, text, emoji, pin: '0107' }),
       })
       if (!res.ok) throw new Error('failed')
       setSent(v => !v)
